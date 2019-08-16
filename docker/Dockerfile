@@ -15,4 +15,4 @@ RUN mkdir -p /root/.xaya
 COPY xaya.conf /root/.xaya
 
 
-RUN xayad
+CMD xayad
