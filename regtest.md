@@ -19,12 +19,12 @@ oltre ad assegnare CHI al wallet aggiunge anche un blocco alla chain. E' necessa
 Minare CHI
 ===
    
-    * xaya-cli -regtest getnewaddress "cymon" 
-      [Per avere il wallet]
-    * xaya-cli -regtest generatetoaddress 101 cYRigVHCgsJYXq2s6C1tT3WsLEyYs1oCqG
-      [La stringa in fondo è quella restituita dal primo comando: è il wallet]
-    * xaya-cli -regtest getbalance
-      [Mostra i CHI ottenuti]
+ * xaya-cli -regtest getnewaddress "cymon" 
+   [Per avere il wallet]
+ * xaya-cli -regtest generatetoaddress 101 cYRigVHCgsJYXq2s6C1tT3WsLEyYs1oCqG
+   [La stringa in fondo è quella restituita dal primo comando: è il wallet]
+ * xaya-cli -regtest getbalance
+   [Mostra i CHI ottenuti]
 
 HelloWorld
 ===
