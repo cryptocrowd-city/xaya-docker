@@ -17,16 +17,18 @@ RUN /bin/bash /root/libjson-rpc-cpp.sh
 COPY scripts/libxayagame.sh /root
 RUN /bin/bash /root/libxayagame.sh
 
-# ===== #
-
 #Xaya core installation [client] (https://github.com/xaya/xaya/releases)
 #COPY xaya-core-1.2.2 /usr/local/bin
 RUN wget https://github.com/xaya/xaya/releases/download/v1.2.2/Xaya-Linux-1.2.2.zip
 RUN unzip Xaya-Linux-1.2.2.zip -d /usr/local/bin
 RUN chmod +x /usr/local/bin/xaya*
 
+# ===== #
+
 #Xaya configuration is mounted
 #RUN mkdir -p /root/.xaya
 #COPY xaya.conf /root/.xaya
+
+ENV LD_LIBRARY_PATH=/usr/local/lib
 
 CMD xayad > /var/xaya/xayad.log 2>&1
