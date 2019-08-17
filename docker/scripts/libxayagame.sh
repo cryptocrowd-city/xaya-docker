@@ -1,4 +1,5 @@
 cd ~/
+source ~/.profile 
 git clone https://github.com/xaya/libxayagame.git
 cd ~/libxayagame
 ./autogen.sh
