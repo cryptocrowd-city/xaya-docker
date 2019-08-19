@@ -31,4 +31,12 @@ RUN chmod +x /usr/local/bin/xaya*
 
 ENV LD_LIBRARY_PATH=/usr/local/lib
 
-CMD xayad > /var/xaya/xayad.log 2>&1
+#pseudo-miner
+ENV XAYA_REGTEST=1
+RUN mkdir -p /opt/scripts
+COPY scripts/miner.sh /opt/scripts/miner.sh
+RUN chmod +x /opt/scripts/miner.sh
+
+COPY scripts/entrypoint.sh /opt/scripts/entrypoint.sh
+RUN chmod +x /opt/scripts/entrypoint.sh
+CMD /opt/scripts/entrypoint.sh
