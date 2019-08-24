@@ -1,4 +1,21 @@
-Ciclo di vita di una "mossa"
+Ciclo di vita di una "mossa" (xaya ad-hoc notifications)
+===
+
+1 - Il gioco, nel momento in cui nasce, si registra nei giochi tracciati
+
+´xaya-cli trackedgames add HelloWorld
+
+2 - Una mossa viene eseguita da un client RPC verso il nodo xaya
+
+`xaya-cli -rpcuser=user -rpcpassword=password -regtest name_update "p/cymon" "{\"g\":{\"helloworld\":{\"m\":\"Hello\"}}}`
+
+3 - Mediante mining il blocco viene aggiunto alla blockchain
+ 
+4 - Il nodo notifica la mossa mediante una notifica ad hoc game-block-attach che riporta come payload un JSON coi dettagli della mossa
+
+5 - Il game daemon assorbe la notifica ed elabora la mossa
+
+Ciclo di vita di una "mossa" (pure bitcoind)
 ===
 
 1 - Una mossa viene eseguita da un client RPC verso il nodo xaya
