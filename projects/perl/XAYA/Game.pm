@@ -26,6 +26,10 @@ has already_processed_notifications => (
     is => 'ro',
     default => sub { {} }
 );
+has test => (
+    is => 'ro',
+    default => 0
+);
 
 #XAYA RPC Management
 has xaya_rpc_endpoint => (
@@ -151,8 +155,11 @@ sub rpc_call
 sub init
 {
     my $self = shift;
-    $self->rpc_call("trackedgames", "add", $self->name);
-    $self->init_subscriber();
+    if(! $self->test)
+    {
+        $self->rpc_call("trackedgames", "add", $self->name);
+        $self->init_subscriber();
+    }
 }
 
 sub main_loop

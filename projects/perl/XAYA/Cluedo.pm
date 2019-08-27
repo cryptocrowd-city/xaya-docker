@@ -109,7 +109,7 @@ sub process_notification
     $self->already_processed_notifications->{$notification->{topic} . $notification->{seq}} = 1;
     if($move_ok)
     {
-        say Dumper($self->game_status);
+        say Dumper($self->game_status) if (! $self->test);
     }
 }
 
@@ -147,7 +147,7 @@ sub init
         }
         $self->game_status->{knowledge}->{$char} = \@knowledge;
     }
-    say Dumper($self->game_status); 
+    say Dumper($self->game_status) if (! $self->test); 
 
  
 }
