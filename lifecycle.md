@@ -13,6 +13,12 @@ Ciclo di vita di una "mossa" (xaya ad-hoc notifications)
  
 4 - Il nodo notifica la mossa mediante una notifica ad hoc game-block-attach che riporta come payload un JSON coi dettagli della mossa
 
+```
+Topic: game-block-attach json Hello
+Payload: {"block":{"hash":"0cbb307d082c3b1804b265b71e27e061e6b5436afedc53c13d03221421f53c97","parent":"99265ac4578d9f2affcdb5dfb25bc5585f2806494383690fd2f6596552e30a23","height":106,"timestamp":1566827264,"rngseed":"0feedc8ffaf74646ccc4ba6eece2b4d191e05714c617d6c2be572260abe1f266"},"moves":[{"txid":"6b996f6d8cffab3977611a9456903ec71324b5734dbf7707b8eca5e931642e01","name":"cymon","inputs":[{"txid":"4e51e321a3bfa790ac257dd53c26720282453cadfda26fc10186e3c0dea036cd","vout":1},{"txid":"4e51e321a3bfa790ac257dd53c26720282453cadfda26fc10186e3c0dea036cd","vout":0}],"out":{"cYRqhURiGkwswKXTD5Eac5w5kQAerWbBYC":49.98934800},"move":{"m":"Hello"}}],"admin":[]}
+Seq: 105
+```
+
 5 - Il game daemon assorbe la notifica ed elabora la mossa
 
 Ciclo di vita di una "mossa" (pure bitcoind)

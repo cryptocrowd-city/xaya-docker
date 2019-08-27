@@ -37,9 +37,10 @@ RUN chmod +x /opt/scripts/miner.sh
 
 #Perl environment
 RUN apt-get install -y cpanminus
-RUN cpanm -i --notest JSON::RPC::Client ZMQ::LibZMQ3 JSON::XS
+RUN cpanm -i --notest JSON::RPC::Client ZMQ::LibZMQ3 JSON::XS DateTime
 
 ENV LD_LIBRARY_PATH=/usr/local/lib
+ENV PERL5LIB=.
 COPY scripts/entrypoint.sh /opt/scripts/entrypoint.sh
 RUN chmod +x /opt/scripts/entrypoint.sh
 CMD /opt/scripts/entrypoint.sh
