@@ -38,47 +38,97 @@ sub run
     {
         my $label = $test->{label} ? $test->{label} : "Test $index";
 
-
-
-        $self->game->process_notification($test->{notification});
-        my $status = $self->game->game_status;
-        if($test->{outcome}->{type} eq 'complete')
+        if($test->{change})
         {
-            is_deeply($self->game->game_status, $test->{outcome}->{content}, 'complete status');
-        }
-        elsif($test->{outcome}->{type} eq 'partial')
-        {
-            foreach my $t (keys %{$test->{outcome}->{content}})
+            my $status = $self->game->game_status;
+            foreach my $c (keys %{$test->{change}})
             {
-                my $one_of = 0;
-                my $keys = $t;
-                if($t =~ /^\?/)
-                {
-                    $keys =~ s/^\?//;
-                    $one_of = 1;
-                }
-                my @path = split /\./, $keys;
+                my @path = split /\./, $c;
                 my $value = $status;
+                my $index = 0;
                 for(@path)
                 {
+                    $index++;
                     my $target = $_;
                     if($target =~ /^[0-9]+/)
                     {
-                        $value = $value->[$target] 
+                        if($index < scalar @path )
+                        {
+                            $value = $value->[$target] 
+                        }
+                        else
+                        {
+                            $value->[$target] = $test->{change}->{$c}
+                        }
                     }
                     else
                     {
-                        $value = $value->{$target} 
+                        if($index < scalar @path )
+                        {
+                            $value = $value->{$target} 
+                        }
+                        else
+                        {
+                            $value->{$target}  = $test->{change}->{$c}
+                        }
                     }
+                    die "Wrong path $c" if ! $value;
                 }
-                if($one_of)
+                diag($c . " changed to " . $test->{change}->{$c});
+            }
+        }
+        if($test->{notification})
+        {
+            diag("New simulated notification arrived...");
+            $self->game->process_notification($test->{notification});
+            $self->game->clock_activities();
+        }
+        if($test->{outcome})
+        {
+            my $status = $self->game->game_status;
+            if($test->{outcome}->{type} eq 'complete')
+            {
+                is_deeply($self->game->game_status, $test->{outcome}->{content}, 'complete status');
+            }
+            elsif($test->{outcome}->{type} eq 'partial')
+            {
+                foreach my $t (keys %{$test->{outcome}->{content}})
                 {
-                    ok( ( grep { $value eq $_ } @{$test->{outcome}->{content}->{$t}} ), "one of $keys")
+                    my $one_of = 0;
+                    my $keys = $t;
+                    if($t =~ /^\?/)
+                    {
+                        $keys =~ s/^\?//;
+                        $one_of = 1;
+                    }
+                    my @path = split /\./, $keys;
+                    my $value = $status;
+                    for(@path)
+                    {
+                        die "Wrong path $t" if ! $value;
+                        my $target = $_;
+                        if($target =~ /^[0-9]+/)
+                        {
+                            $value = $value->[$target] 
+                        }
+                        else
+                        {
+                            $value = $value->{$target} 
+                        }
+                    }
+                    if($one_of)
+                    {
+                        ok( ( grep { $value eq $_ } @{$test->{outcome}->{content}->{$t}} ), "one of $keys")
+                    }
+                    elsif(! $test->{outcome}->{content}->{$t})
+                    {
+                        ok( ! $value, "undef $keys");
+                    }
+                    else
+                    {
+                        is_deeply($value, $test->{outcome}->{content}->{$t}, "is_deeply " . $keys);
+                    } 
                 }
-                else
-                {
-                    is_deeply($value, $test->{outcome}->{content}->{$t}, "is_deeply " . $keys);
-                } 
             }
         }
         $index++;

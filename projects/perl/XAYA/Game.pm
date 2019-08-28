@@ -118,6 +118,12 @@ sub process_notification
     }
     $self->already_processed_notifications->{$notification->{topic} . $notification->{seq}} = 1;
 }
+sub clock_activities
+{
+    my $self = shift;
+    say "clock activities";
+}
+
 
 sub rpc_call
 {
@@ -172,6 +178,7 @@ sub main_loop
         {
             $self->process_notification($n);
         }
+        $self->clock_activities();
     }
 }
 

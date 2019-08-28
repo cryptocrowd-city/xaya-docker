@@ -63,46 +63,53 @@ sub process_notification
     {
         my $name = $move->{name};
         my $move = $move->{move};
-        if($move->{action} eq 'join')
+        if(%{$move})
         {
-            if(scalar @{$self->game_status->{players}} >= 6)
+            if($move->{action} eq 'join')
             {
-                say "No more players allowed";
-            }
-            elsif($self->present_player($name))
-            {
-                say "Player already present"
-            } 
-            else
-            {
-                my $character =  splice @{$self->available_characters}, rand @{$self->available_characters}, 1;
-                my @knowledge = @{$self->game_status->{knowledge}->{$character}};
-                push @{$self->game_status->{players}}, { name => $name,
-                                                         character => $character,
-                                                         knowledge => \@knowledge,
-                                                         position => $self->rooms->[ rand @{$self->rooms} ] };
-                $move_ok = 1;
-            }
-        } 
-        elsif($move->{action} eq 'move')
-        {
-            my $player = $self->present_player($name);
-            if($player)
-            {
-                my $destination = $move->{destination};
-                if($destination eq $player->{position})
+                if(scalar @{$self->game_status->{players}} >= 6)
                 {
-                    say "Bad destination"
+                    say "No more players allowed";
+                }
+                elsif($self->present_player($name))
+                {
+                    say "Player already present"
+                } 
+                else
+                {
+                    my $character =  splice @{$self->available_characters}, rand @{$self->available_characters}, 1;
+                    my @knowledge = @{$self->game_status->{knowledge}->{$character}};
+                    push @{$self->game_status->{players}}, { name => $name,
+                                                            character => $character,
+                                                            knowledge => \@knowledge,
+                                                            position => $self->rooms->[ rand @{$self->rooms} ] };
+                    $move_ok = 1;
+                }
+            } 
+            elsif($move->{action} eq 'move')
+            {
+                my $player = $self->present_player($name);
+                if($player)
+                {
+                    my $destination = $move->{destination};
+                    if($destination eq $player->{position})
+                    {
+                        say "Bad destination"
+                    }
+                    elsif(exists $player->{ongoing})
+                    {
+                        say "Busy player";
+                    }
+                    else
+                    {
+                        $player->{ongoing} = { move => $move, timestamp => DateTime->now };    
+                        $move_ok = 1;
+                    }
                 }
                 else
                 {
-                    $player->{ongoing} = { move => $move, timestamp => DateTime->now };    
-                    $move_ok = 1;
+                    say "Bad player"
                 }
-            }
-            else
-            {
-                say "Bad player"
             }
         }
     }
@@ -110,6 +117,28 @@ sub process_notification
     if($move_ok)
     {
         say Dumper($self->game_status) if (! $self->test);
+    }
+}
+
+sub clock_activities
+{
+    my $self = shift;
+    foreach my $p (@{$self->game_status->{players}})
+    {
+        if($p->{ongoing})
+        {
+            my $ref = DateTime->now;
+            $ref->add( hours => -1 );
+            if(DateTime->compare($ref, $p->{ongoing}->{timestamp}) > 0)
+            {
+                my $move = $p->{ongoing}->{move};
+                if($move->{action} eq 'move')
+                {
+                    $p->{position} = $move->{destination};
+                }
+                delete $p->{ongoing};
+            } 
+        }
     }
 }
 
