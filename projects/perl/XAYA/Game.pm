@@ -51,6 +51,11 @@ has game_status => (
     is => 'ro',
     default => sub { {} }
 );
+has log => (
+    is => 'ro',
+    default => sub { [] }
+);
+
 
 sub notification_to_process
 {
@@ -187,6 +192,16 @@ sub start
     my $self = shift;
     $self->init();
     $self->main_loop();
+}
+
+sub write_log
+{
+    my $self = shift;
+    my $player = shift;
+    my $message = shift;
+    $player ||= ' ';
+    my $ts = DateTime->now;
+    push @{$self->log}, $ts->ymd('-') . " " . $ts->hms(':') . " - " . $player . " - " . $message;
 }
 
 1;
