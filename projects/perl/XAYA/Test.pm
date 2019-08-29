@@ -85,49 +85,61 @@ sub run
         }
         if($test->{outcome})
         {
-            my $status = $self->game->game_status;
-            if($test->{outcome}->{type} eq 'complete')
+            foreach my $o (@{$test->{outcome}})
             {
-                is_deeply($self->game->game_status, $test->{outcome}->{content}, 'complete status');
-            }
-            elsif($test->{outcome}->{type} eq 'partial')
-            {
-                foreach my $t (keys %{$test->{outcome}->{content}})
+                my $status = $self->game->game_status;
+                if($o->{type} eq 'complete')
                 {
-                    my $one_of = 0;
-                    my $keys = $t;
-                    if($t =~ /^\?/)
+                    is_deeply($self->game->game_status, $o->{content}, 'complete status');
+                }
+                elsif($o->{type} eq 'partial')
+                {
+                    foreach my $t (keys %{$o->{content}})
                     {
-                        $keys =~ s/^\?//;
-                        $one_of = 1;
-                    }
-                    my @path = split /\./, $keys;
-                    my $value = $status;
-                    for(@path)
-                    {
-                        die "Wrong path $t" if ! $value;
-                        my $target = $_;
-                        if($target =~ /^[0-9]+/)
+                        my $one_of = 0;
+                        my $keys = $t;
+                        if($t =~ /^\?/)
                         {
-                            $value = $value->[$target] 
+                            $keys =~ s/^\?//;
+                            $one_of = 1;
+                        }
+                        my @path = split /\./, $keys;
+                        my $value = $status;
+                        for(@path)
+                        {
+                            die "Wrong path $t" if ! $value;
+                            my $target = $_;
+                            if($target =~ /^[0-9]+/)
+                            {
+                                $value = $value->[$target] 
+                            }
+                            else
+                            {
+                                $value = $value->{$target} 
+                            }
+                        }
+                        if($one_of)
+                        {
+                            ok( ( grep { $value eq $_ } @{$o->{content}->{$t}} ), "one of $keys")
+                        }
+                        elsif(! $o->{content}->{$t})
+                        {
+                            ok( ! $value, "undef $keys");
                         }
                         else
                         {
-                            $value = $value->{$target} 
-                        }
+                            is_deeply($value, $o->{content}->{$t}, "is_deeply " . $keys);
+                        } 
                     }
-                    if($one_of)
+                }
+                elsif($o->{type} eq 'log')
+                {
+                    foreach my $t (keys %{$o->{content}})
                     {
-                        ok( ( grep { $value eq $_ } @{$test->{outcome}->{content}->{$t}} ), "one of $keys")
+                        my $check = $o->{content}->{$t};
+                        my $line = $self->game->log->[$t];
+                        like($line, qr/$check/, "Log $check");
                     }
-                    elsif(! $test->{outcome}->{content}->{$t})
-                    {
-                        ok( ! $value, "undef $keys");
-                    }
-                    else
-                    {
-                        is_deeply($value, $test->{outcome}->{content}->{$t}, "is_deeply " . $keys);
-                    } 
                 }
             }
         }
