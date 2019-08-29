@@ -120,6 +120,10 @@ sub process_notification
                     {
                         $self->write_log($name, "Bad destination");
                     }
+                    elsif(! grep { $_ eq $move->{destination} } @{$self->rooms})
+                    {
+                        $self->write_log($name, "Wrong destination");
+                    }
                     elsif(exists $player->{ongoing})
                     {
                         $self->write_log($name, "Busy player");

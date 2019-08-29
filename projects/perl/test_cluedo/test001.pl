@@ -68,22 +68,7 @@ $test->add_test({
 
 
 
-#$test->add_test({
-#    change => { 'players.0.position' => 'Kitchen' },
-#    notification => $test->build_notification('attack', 'cymon', { action => 'move', destination => 'Ballroom' }),
-#    outcome => [{ type => 'partial',
-#                 content => { 'players.0.position' => 'Kitchen' } }]
-#}); 
 
-#my $past_ts = DateTime->now();
-#$past_ts->add( hours => -2);
-#$test->add_test({
-#    change => { 'players.0.ongoing.timestamp' => $past_ts },
-#    notification => $test->build_notification('void', 'cymon', { }),
-#    outcome => [{type => 'partial',
-#                content => {'players.0.position' => 'Ballroom',
-#                            'players.0.ongoing' => undef } }]
-#});
 $test->run;
 
 
