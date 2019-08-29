@@ -51,7 +51,31 @@ sub present_player
         return undef;
     }
 }
-
+sub inspectable_room
+{
+    my $self = shift;
+    my $room = shift;
+    return 1 if (! exists $self->game_status->{room_status}->{$room});
+    my $ref = DateTime->now;
+    $ref->add( hours => -6 );
+    if(DateTime->compare($ref, $self->game_status->{room_status}->{$room}) > 0)
+    {
+        for(@{$self->game_status->{players}})
+        {
+            my $p = $_;
+            if($p->{position} eq $room &&
+               $p->{ongoing}->{move}->{action} eq 'inspect')
+            {
+                return 0;
+            }
+        }
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
 
 sub process_notification
 {
@@ -69,11 +93,11 @@ sub process_notification
             {
                 if(scalar @{$self->game_status->{players}} >= 6)
                 {
-                    say "No more players allowed";
+                    $self->write_log($name, "No more players allowed");
                 }
                 elsif($self->present_player($name))
                 {
-                    say "Player already present"
+                    $self->write_log($name, "Player already present");
                 } 
                 else
                 {
@@ -94,16 +118,43 @@ sub process_notification
                     my $destination = $move->{destination};
                     if($destination eq $player->{position})
                     {
-                        say "Bad destination"
+                        $self->write_log($name, "Bad destination");
                     }
                     elsif(exists $player->{ongoing})
                     {
-                        say "Busy player";
+                        $self->write_log($name, "Busy player");
                     }
                     else
                     {
                         $player->{ongoing} = { move => $move, timestamp => DateTime->now };    
                         $move_ok = 1;
+                    }
+                }
+                else
+                {
+                    $self->write_log($name, "Bad player");
+                }
+            }
+            elsif($move->{action} eq 'inspect')
+            {
+                my $player = $self->present_player($name);
+                if($player)
+                {
+                    if(exists $player->{ongoing})
+                    {
+                        say "Busy player";
+                    }
+                    else
+                    {
+                        if($self->inspectable_room($player->{position}))
+                        {
+                            $player->{ongoing} = { move => $move, timestamp => DateTime->now };    
+                            $move_ok = 1;
+                        }
+                        else
+                        {
+                            say "Room not available for inspection";
+                        }
                     }
                 }
                 else
@@ -180,5 +231,6 @@ sub init
 
  
 }
+
 
 1;
