@@ -37,6 +37,7 @@ sub run
     foreach my $test (@{$self->tests})
     {
         my $label = $test->{label} ? $test->{label} : "Test $index";
+        diag("   [ $label ]");
 
         if($test->{change})
         {

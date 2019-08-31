@@ -51,19 +51,34 @@ sub present_player
         return undef;
     }
 }
+sub busy_player
+{
+    my $self = shift;
+    my $player = shift;
+    if(exists $player->{ongoing} && 
+       grep { $player->{ongoing}->{move}->{action} eq $_ } qw(move inspect))
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;    
+    }
+}
 sub inspectable_room
 {
     my $self = shift;
     my $room = shift;
-    return 1 if (! exists $self->game_status->{room_status}->{$room});
     my $ref = DateTime->now;
     $ref->add( hours => -6 );
-    if(DateTime->compare($ref, $self->game_status->{room_status}->{$room}) > 0)
+    if( (! exists $self->game_status->{room_status}->{$room} || ! $self->game_status->{room_status}->{$room}) ||
+        DateTime->compare($ref, $self->game_status->{room_status}->{$room}) > 0 )
     {
         for(@{$self->game_status->{players}})
         {
             my $p = $_;
             if($p->{position} eq $room &&
+               $p->{ongoing} &&
                $p->{ongoing}->{move}->{action} eq 'inspect')
             {
                 return 0;
@@ -74,6 +89,21 @@ sub inspectable_room
     else
     {
         return 0;
+    }
+}
+sub add_knowledge
+{
+    my $self = shift;
+    my $player = shift;
+    my $card = shift;
+    if(grep {$card eq $_} @{$player->{knowledge}})
+    {
+        return 0;
+    }
+    else
+    {
+        push @{$player->{knowledge}}, $card;
+        return 1;
     }
 }
 
@@ -110,45 +140,37 @@ sub process_notification
                     $move_ok = 1;
                 }
             } 
-            elsif($move->{action} eq 'move')
+            else
             {
                 my $player = $self->present_player($name);
-                if($player)
-                {
-                    my $destination = $move->{destination};
-                    if($destination eq $player->{position})
-                    {
-                        $self->write_log($name, "Bad destination");
-                    }
-                    elsif(! grep { $_ eq $move->{destination} } @{$self->rooms})
-                    {
-                        $self->write_log($name, "Wrong destination");
-                    }
-                    elsif(exists $player->{ongoing})
-                    {
-                        $self->write_log($name, "Busy player");
-                    }
-                    else
-                    {
-                        $player->{ongoing} = { move => $move, timestamp => DateTime->now };    
-                        $move_ok = 1;
-                    }
-                }
-                else
+                if(! $player)
                 {
                     $self->write_log($name, "Bad player");
                 }
-            }
-            elsif($move->{action} eq 'inspect')
-            {
-                my $player = $self->present_player($name);
-                if($player)
+                elsif($self->busy_player($player))
                 {
-                    if(exists $player->{ongoing})
+                    $self->write_log($name, "Busy player");
+                }
+                else
+                {
+                    if($move->{action} eq 'move')
                     {
-                        say "Busy player";
+                        my $destination = $move->{destination};
+                        if($destination eq $player->{position})
+                        {
+                            $self->write_log($name, "Bad destination " . $move->{destination});
+                        }
+                        elsif(! grep { $_ eq $move->{destination} } @{$self->rooms})
+                        {
+                            $self->write_log($name, "Wrong destination " . $move->{destination});
+                        }
+                        else
+                        {
+                            $player->{ongoing} = { move => $move, timestamp => DateTime->now };    
+                            $move_ok = 1;
+                        }
                     }
-                    else
+                    elsif($move->{action} eq 'inspect')
                     {
                         if($self->inspectable_room($player->{position}))
                         {
@@ -157,14 +179,11 @@ sub process_notification
                         }
                         else
                         {
-                            say "Room not available for inspection";
+                            $self->write_log($name, $player->{position} . " not available for inspection")
                         }
                     }
                 }
-                else
-                {
-                    say "Bad player"
-                }
+
             }
         }
     }
@@ -180,7 +199,7 @@ sub clock_activities
     my $self = shift;
     foreach my $p (@{$self->game_status->{players}})
     {
-        if($p->{ongoing})
+        if(exists $p->{ongoing} && $p->{ongoing})
         {
             my $ref = DateTime->now;
             $ref->add( hours => -1 );
@@ -190,6 +209,14 @@ sub clock_activities
                 if($move->{action} eq 'move')
                 {
                     $p->{position} = $move->{destination};
+                }
+                elsif($move->{action} eq 'inspect')
+                {
+                    my @clues = ( @{$self->game_status->{clues}->{rooms}},
+                                  @{$self->game_status->{clues}->{characters}},
+                                  @{$self->game_status->{clues}->{weapons}});
+                    $self->add_knowledge($p, $clues[rand @clues]);
+                    $self->game_status->{room_status}->{$p->{position}} = DateTime->now;
                 }
                 delete $p->{ongoing};
             } 
@@ -220,6 +247,10 @@ sub init
     splice @characters, $index, 1;
     $self->game_status->{solution} = $solution;
 
+    @{$self->game_status->{clues}->{rooms}} = @rooms;
+    @{$self->game_status->{clues}->{weapons}} = @weapons;
+    @{$self->game_status->{clues}->{characters}} = @characters;
+
     my @clues = (@rooms, @weapons, @characters);
     for(@{$self->characters})
     {
@@ -230,6 +261,10 @@ sub init
             push @knowledge, splice( @clues, rand @clues, 1 );
         }
         $self->game_status->{knowledge}->{$char} = \@knowledge;
+    }
+    for(@{$self->rooms})
+    {
+        $self->game_status->{room_status}->{$_} = undef;
     }
     say Dumper($self->game_status) if (! $self->test); 
 
